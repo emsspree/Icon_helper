@@ -33,7 +33,7 @@ for SVG in "$@"; do
   done
 
   mkdir -p 'icns'
-  iconutil -c icns -o "./icns/${BASE}.icns"  "./${ICONSET}"
+  iconutil -c icns -o "${HOME}/Desktop/${BASE}.icns"  "./${ICONSET}"
 
 done
 exit 0
