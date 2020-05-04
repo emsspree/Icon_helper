@@ -1,6 +1,6 @@
-#!/bin/sh -x
+#!/bin/sh
 
-TARGET="${HOME}/Desktop/"
+TARGET="${HOME}/Desktop"
 
 SIZES='
 16,16x16
@@ -16,24 +16,22 @@ SIZES='
 '
 
 for SVG in "$@"; do
-  BASE=$(basename "$SVG" | sed 's/\.[^\.]*$//')
-  ICONSET="$BASE.iconset"
-  mkdir -p "${TARGET}/$ICONSET"
-  for PARAMS in $SIZES; do
-    SIZE=$( echo $PARAMS | cut -d, -f1)
-    LABEL=$(echo $PARAMS | cut -d, -f2)
-    case "${LABEL}" in
-          *@2x)  DPI=144;;
-          *   )  DPI=72 ;;
-    esac
-    rsvg-convert  --dpi-x="$DPI"  --dpi-y="$DPI"  --width="$SIZE"  --height="$SIZE"  --format='png'  \
-      --output "${TARGET}/${ICONSET}/icon_${LABEL}.png"  "${SVG}"
-  done
+  if [ -e "$SVG" ]; then
+    BASE=$(basename "$SVG" | sed 's/\.[^\.]*$//')
+    ICONSET="$BASE.iconset"
+    mkdir -p "${TARGET}/${ICONSET}"
+    #shellcheck disable=2086
+    for PARAMS in $SIZES; do
+      SIZE=$( echo $PARAMS | cut -d, -f1)
+      LABEL=$(echo $PARAMS | cut -d, -f2)
+      case "${LABEL}" in
+            *@2x)  DPI=144;;
+            *   )  DPI=72 ;;
+      esac
+      rsvg-convert  --dpi-x="$DPI"  --dpi-y="$DPI"  --width="$SIZE"  --height="$SIZE"  --format='png'  --output "${TARGET}/${ICONSET}/icon_${LABEL}.png"  "${SVG}"
+    done
+    iconutil -c icns -o "${TARGET}/${BASE}.icns"  "${TARGET}/${ICONSET}"
+  fi
 done
-iconutil -c icns -o "${TARGET}/${BASE}.icns"  "${TARGET}/${ICONSET}"
 exit
 
-          # sips  --setProperty dpiHeight "$DPI"  --setProperty dpiWidth "$DPI"  "./${ICONSET}/icon_${LABEL}.png"
-          # svg2png  -h "$SIZE" -w "$SIZE"  "$SVG"  1> "${ICONSET}/icon_$LABEL.png" ## brew install svg2png
-          # qlmanage  -t  -s "$SIZE"  -o .  "$SVG"                         ## using Gapplin QLgen
-          # mv "$SIZE.svg.png"  "${HOME}/Desktop/${BASE}./icon_${LABEL}.png"
