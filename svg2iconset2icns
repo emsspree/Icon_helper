@@ -29,6 +29,7 @@ for SVG in "$@"; do
             *   )  DPI=72 ;;
       esac
       rsvg-convert  --dpi-x="$DPI"  --dpi-y="$DPI"  --width="$SIZE"  --height="$SIZE"  --format='png'  --output "${TARGET}/${ICONSET}/icon_${LABEL}.png"  "${SVG}"
+    # rsvg-convert from GNOME Project’s librsvg —— brew install librsvg
     done
     iconutil -c icns -o "${TARGET}/${BASE}.icns"  "${TARGET}/${ICONSET}"
   fi
