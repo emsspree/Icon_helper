@@ -1,38 +1,66 @@
 #!/bin/sh
 
-TARGET="${HOME}/Desktop"
+##### where to save
+ICONS_BASEDIR="${HOME-./}/Desktop/Icons/"
+###
+DIR_ICONSET="${ICONS_BASEDIR-./}IconsetsPNG/"
+DIR_ICNS="${ICONS_BASEDIR-./}ICNSs/"
 
+##### which converter to use
+alias _svg_to_png='/usr/local/bin/rsvg-convert '
+###                               rsvg-convert from GNOME Project’s librsvg
+###                               brew install librsvg
+
+##### set sizes and factors
 SIZES='
-16,16x16
-32,16x16@2x
-32,32x32
-64,32x32@2x
-128,128x128
-256,128x128@2x
-256,256x256
-512,256x256@2x
-512,512x512
-1024,512x512@2x
+  16,1
+  32,2
+  32,1
+  64,2
+  64,1
+ 128,2
+ 128,1
+ 256,2
+ 256,1
+ 512,2
+ 512,1
+1024,2
 '
+
+DPI_ORIG=72
 
 for SVG in "$@"; do
   if [ -e "$SVG" ]; then
-    BASE=$(basename "$SVG" | sed 's/\.[^\.]*$//')
-    ICONSET="$BASE.iconset"
-    mkdir -p "${TARGET}/${ICONSET}"
+
+    CURR_ICON_NAME=$(basename "$SVG" | sed 's/\.[^\.]*$//')
+    CURR_ICONSET_DIR="${CURR_ICON_NAME}.iconset"
+
+    mkdir -p "${DIR_ICONSET}${CURR_ICONSET_DIR}" "${DIR_ICNS}"
+
     #shellcheck disable=2086
     for PARAMS in $SIZES; do
-      SIZE=$( echo $PARAMS | cut -d, -f1)
-      LABEL=$(echo $PARAMS | cut -d, -f2)
-      case "${LABEL}" in
-            *@2x)  DPI=144;;
-            *   )  DPI=72 ;;
-      esac
-      rsvg-convert  --dpi-x="$DPI"  --dpi-y="$DPI"  --width="$SIZE"  --height="$SIZE"  --format='png'  --output "${TARGET}/${ICONSET}/icon_${LABEL}.png"  "${SVG}"
-    # rsvg-convert from GNOME Project’s librsvg —— brew install librsvg
+
+      SIZE_PIXELS=$(echo $PARAMS | cut -d, -f1) ### 16…1024
+      FACTOR=$(echo $PARAMS | cut -d, -f2)      ### 1 || 2
+      DPI=$(echo ${DPI_ORIG}'*'${FACTOR} | bc)
+      SIZE_NAME=$(echo ${SIZE_PIXELS}'/'${FACTOR} | bc)
+      LABEL="${SIZE_NAME}"'x'"${SIZE_NAME}"
+
+      if [ ${FACTOR} -gt 1 ]; then LABEL="${LABEL}"'@'"${FACTOR}"'x'; fi
+
+      echo "${PARAMS}$(printf '\t')${FACTOR}$(printf '\t')${DPI}$(printf '\t')${SIZE_PIXELS}$(printf '\t')${SIZE_NAME}$(printf '\t')${LABEL}" 1>/dev/ttys011 2>/dev/ttys012
+
+      _svg_to_png \
+        --dpi-x="$DPI" --dpi-y="$DPI" --width="$SIZE_PIXELS" --height="$SIZE_PIXELS" \
+        --format='png' --output "${DIR_ICONSET}/${CURR_ICONSET_DIR}/icon_${LABEL}.png" \
+        "${SVG}"
+
     done
-    iconutil -c icns -o "${TARGET}/${BASE}.icns"  "${TARGET}/${ICONSET}"
+
+    /usr/bin/iconutil \
+      -c icns \
+      -o "${DIR_ICNS}/${CURR_ICON_NAME}.icns" \
+      "${DIR_ICONSET}/${CURR_ICONSET_DIR}"
+
   fi
 done
-exit
-
